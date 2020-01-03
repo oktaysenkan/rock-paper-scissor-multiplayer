@@ -10,12 +10,10 @@ app.get('/', function (req, res) {
 const users = [];
 const games = [];
 
-//Whenever someone connects this gets executed
 io.on('connection', function (socket) {
    console.log('A user connected');
    socket.emit('id', socket.id);
 
-   //Whenever someone disconnects this piece of code executed
    socket.on('disconnect', function () {
       console.log('A user disconnected');
    });
@@ -33,11 +31,11 @@ io.on('connection', function (socket) {
          const user1 = users[0];
          const user2 = users[1];
          users.splice(0, 2);
-         console.log('Oyun oluşturuluyor.');
+
          const roomid = uuid.uuid();
-         console.log(roomid);
-         io.to(user1).emit('game-starting', roomid)
-         io.to(user2).emit('game-starting', roomid)
+         console.log(`Oyun oluşturuldu, Room ID: ${roomid}`);
+         io.to(user1).emit('game-starting', roomid);
+         io.to(user2).emit('game-starting', roomid);
          games.push({
             roomid: roomid,
             counter: 0,
@@ -52,25 +50,19 @@ io.on('connection', function (socket) {
                }
             ]
          });
-         console.log(games);
       }
    });
 
    socket.on('selected-card', (data) => {
-      // console.log(data.roomid);
-      // console.log(data.selection);
-      // console.log(data.userid);
+      console.log(`${data.roomid} numaralı oyunda ${data.userid} numaralı oyuncu ${data.selection} kartını seçti.`);
 
       let game = games.filter(g => g.roomid === data.roomid)[0]
       game.counter = game.counter + 1;
-      console.log(game);
 
       let user = game.users.filter(u => u.userid === data.userid)[0]
       user.selection = data.selection;
 
       if (game.counter % 2 === 0) {
-         console.log(game.users);
-         
          const user1 = game.users[0];
          const user2 = game.users[1];
 
