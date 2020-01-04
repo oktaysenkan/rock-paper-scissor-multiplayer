@@ -11,14 +11,40 @@ const users = [];
 const games = [];
 
 io.on('connection', function (socket) {
-   console.log('A user connected');
+   console.log(`Kullanıcı bağlandı: ${socket.id}.`);
    socket.emit('id', socket.id);
 
-   socket.on('disconnect', function () {
-      console.log('A user disconnected');
+   socket.on('disconnect', function (reason) {
+      console.log(`Kullanıcı ayrıldı: ${socket.id}`);
+
+      const userIndex = users.indexOf(socket.id);
+      if (userIndex !== -1) {
+         users.splice(userIndex, 1);
+         console.log(`${socket.id} eşleşme sırasından ayrıldı!`);
+      }
+
+      games.filter(game => {
+         const user = game.users.filter(user => user.userid === socket.id);
+         if (user){
+            const user1 = game.users[0].userid;
+            const user2 = game.users[1].userid;
+
+            if (user1 === socket.id) {
+               io.to(user1).emit('you-are-disconnected')
+               io.to(user2).emit('rival-disconnected')
+            } else if (user2 === socket.id) {
+               io.to(user2).emit('you-are-disconnected')
+               io.to(user1).emit('rival-disconnected')
+            }
+
+            const gameIndex = games.indexOf(game);
+            games.splice(gameIndex, 1);
+            console.log(`Room ID: ${game.roomid} oyuncu ayrıldığı için kapatıldı!`);
+         }
+      })
    });
 
-   socket.on('start-queue', (clientid) => {
+   socket.on('start-queue', () => {
       const userIndex = users.indexOf(socket.id);
       if (userIndex !== -1) {
          return;
